@@ -1,12 +1,13 @@
-from sklearn import datasets
 from sklearn.model_selection import train_test_split
+from ID3DecisionTree import ID3DecisionTree
+from sklearn import preprocessing
 from sklearn.utils import shuffle
+from operator import itemgetter
+from sklearn import datasets
+from sklearn import tree
 import pandas as pd
 import numpy as np
-from KNNClassifier import KNNClassifier
-from operator import itemgetter
-from wrangler import Wrangler
-from sklearn.model_selection import cross_val_score, cross_val_predict
+
 
 
 
@@ -60,59 +61,76 @@ class Shell:
             print(f"Cross val #{x + 1}...")
             indexes = [range((0 + (x * bin_size)), bin_size + (x * bin_size))]
 
-            self.x_test = self.data[indexes]
-            self.x_train = np.delete(self.data, indexes, axis=0)
-            self.y_test = self.target[indexes]
-            self.y_train = np.delete(self.target, indexes, axis=0)
+            self.x_test = pd.DataFrame(self.data[indexes])
+            self.x_train = pd.DataFrame(np.delete(self.data, indexes, axis=0))
+            self.y_test = pd.DataFrame(self.target[indexes])
+            self.y_train = pd.DataFrame(np.delete(self.target, indexes, axis=0))
 
             # run the normal methods
             self.fit_model_to_shell()
             self.predict_from_classifier()
 
             # put accuracy in list
-            accuracies.append(get_accuracy(self, _range))
+            accuracies.append(self.get_accuracy(_range))
         print(accuracies)
         accuracies = np.array(accuracies)
         print(f"Mean accuracy is {round(np.mean(accuracies), 1)}%")
 
-def eval_range(shell, _range, x):
-    return ((shell.y_test[x] + _range <= shell.y_predicted[x]) or
-            (shell.y_test[x] - _range >= shell.y_predicted[x]))
+    def eval_range(self, _range, x):
+        return ((self.y_test[x] + _range <= self.y_predicted[x]) or
+                (self.y_test[x] - _range >= self.y_predicted[x]))
+
+    def get_accuracy(self, _range=0):
+        correct = 0
+        for x in range(len(self.y_test)):
+            if self.y_test.values.tolist()[x] == self.y_predicted[x]:
+                correct += 1
+        accuracy = (correct / float(len(self.y_test))) * 100.0
+        return round(accuracy, 1)
 
 
-def get_accuracy(shell, _range=0):
-    correct = 0
-    for x in range(len(shell.y_test)):
-        if _range and eval_range(shell, _range, x):
-            correct += 1
-        elif shell.y_test[x] == shell.y_predicted[x]:
-            correct += 1
-    accuracy = (correct / float(len(shell.y_test))) * 100.0
-    return accuracy
+
+col_names = [ "targets", "handi-inf", "water",
+              "adop-budg-res",
+              "physi", "aid", "religion",
+              "anti-sat-ban", "nicaraguan", "missile", "immig",
+              "synfuels", "edu-spend", "superfund-sue",
+              "crime", "exports", "s-afri" ]
+df = pd.read_csv("data/house-votes-84.data", names=col_names).replace("?", value="meh")
+targets = df["targets"]
+df = df.drop(["targets"], axis=1)
+
+votes_shell = Shell(df, targets, ID3DecisionTree())
+
+votes_shell.fit_model_to_shell()
+votes_shell.model.show_tree()
+votes_shell.predict_from_classifier()
+print(f"Custom votes tree accuracy: {votes_shell.get_accuracy()}%")
 
 
-"""Test Shell on normal test data and classifiers"""
-classifier = KNNClassifier(k=5)
+df = df.apply(preprocessing.LabelEncoder().fit_transform)
+
+classifier = tree.DecisionTreeClassifier()
+new_votes_shell = Shell(df, targets, classifier)
+new_votes_shell.fit_model_to_shell()
+new_votes_shell.predict_from_classifier()
+print(f"sklearn votes tree accuracy: {new_votes_shell.get_accuracy()}%")
 
 iris = datasets.load_iris()
-shell = Shell(iris.data, iris.target, classifier)
-shell.cross_val_custom(10)
+iris_data = pd.DataFrame(iris['data'],
+                     columns=iris['feature_names'])
 
+for feature in iris_data.columns:
+    iris_data[feature] = pd.cut(iris_data[feature], bins = 3).astype(str).apply(str)
 
+iris_shell = Shell(iris_data, pd.DataFrame(iris['target'], columns=['targets']), ID3DecisionTree())
+iris_shell.fit_model_to_shell()
+iris_shell.model.show_tree()
+iris_shell.predict_from_classifier()
+print(f"Custom iris tree accuracy: {iris_shell.get_accuracy()}%")
 
-# wrangler holds all three datasets as member variables
-w = Wrangler()
-
-# cars dataset
-shell_cars = Shell(w.car_data.data.values, w.car_data.targets.values, classifier)
-shell_cars.cross_val_custom(10)
-
-
-# diabetes dataset
-shell_d = Shell(w.diabetes_data.data.values, w.diabetes_data.targets.values, classifier)
-shell_d.cross_val_custom(10)
-
-
-# mpg dataset
-shell_m = Shell(w.mpg_data.data.values, w.mpg_data.targets.values, classifier)
-shell_m.cross_val_custom(10, 3)
+df = iris_data.apply(preprocessing.LabelEncoder().fit_transform)
+new_iris_shell = Shell(df, pd.DataFrame(iris['target'], columns=['targets']), tree.DecisionTreeClassifier())
+new_iris_shell.fit_model_to_shell()
+new_iris_shell.predict_from_classifier()
+print(f"sklearn iris tree accuracy: {new_iris_shell.get_accuracy()}%")
