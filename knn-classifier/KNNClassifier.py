@@ -39,7 +39,7 @@ class KNNModel:
             predictions.append(vote)
         return predictions
 
-    
+
 
 
 class KNNClassifier:
@@ -47,8 +47,4 @@ class KNNClassifier:
         self.k = k
 
     def fit(self, data_train, targets_train):
-        self.model = KNNModel(data_train, targets_train, self.k)
         return KNNModel(data_train, targets_train, self.k)
-
-    def predict(self):
-        self.model.predict()
