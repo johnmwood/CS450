@@ -1,5 +1,6 @@
 from sklearn.model_selection import train_test_split
 from NeuralNetwork import NeuralNetClassifier
+from sklearn.neural_network import MLPClassifier
 from wrangler import Wrangler
 from sklearn import preprocessing
 from sklearn.utils import shuffle
@@ -93,17 +94,32 @@ class Shell:
 #                                            columns=['targets']),
 #                                            NeuralNetClassifier(hidden_layers_info=[5,4],
 #                                            learn_rate=0.2,
-#                                            epochs=1,
-#                                            thres_function=''))
+#                                            epochs=200,
+#                                            thres_function='sigmoid'))
 # iris_shell.fit_model_to_shell()
 # iris_shell.predict_from_classifier()
 # print(f"Accuracy: {iris_shell.get_accuracy()}%")
 
 
+
 w = Wrangler()
 
-# pima_shell = Shell(w.diabetes_data.data,
-#                    w.diabetes_data.targets,
+""" our implementation of iris """
+iris_shell = Shell(w.iris.data,
+                   w.iris.targets,
+                   NeuralNetClassifier(hidden_layers_info=[5,4],
+                                       learn_rate=0.2,
+                                       epochs=200,
+                                       thres_function='sigmoid')
+                  )
+
+iris_shell.fit_model_to_shell()
+iris_shell.predict_from_classifier()
+print(f"Accuracy: {iris_shell.get_accuracy()}%")
+
+""" our implementation of diabetes """
+# pima_shell = Shell(w.diabetes.data,
+#                    w.diabetes.targets,
 #                    NeuralNetClassifier(hidden_layers_info=[5,4],
 #                    learn_rate=0.2,
 #                    epochs=100,
@@ -113,13 +129,50 @@ w = Wrangler()
 # pima_shell.predict_from_classifier()
 # print(f"Accuracy: {pima_shell.get_accuracy()}%")
 
-car_shell = Shell(w.car_data.data,
-                   w.car_data.targets,
-                   NeuralNetClassifier(hidden_layers_info=[5,4],
-                   learn_rate=0.2,
-                   epochs=100,
-                   thres_function='sigmoid'))
+""" our implementation of car """
+# car_shell = Shell(w.car.data,
+#                    w.car.targets,
+#                    NeuralNetClassifier(hidden_layers_info=[5,4],
+#                    learn_rate=0.2,
+#                    epochs=100,
+#                    thres_function='sigmoid'))
+#
+# car_shell.fit_model_to_shell()
+# car_shell.predict_from_classifier()
+# print(f"Accuracy: {car_shell.get_accuracy()}%")
 
-car_shell.fit_model_to_shell()
-car_shell.predict_from_classifier()
-print(f"Accuracy: {car_shell.get_accuracy()}%")
+""" existing implementation of car """
+# car_clf = MLPClassifier(activation='logistic',
+#                              hidden_layer_sizes=(5,))
+#
+# x_train, x_test, y_train, y_test = train_test_split(w.car.data,
+#                                                     w.car.targets,
+#                                                     test_size=0.7,
+#                                                     train_size=0.3)
+#
+# car_clf.fit(x_train, y_train)
+# print(car_clf.score(x_test, y_test))
+
+""" existing implementation of diabetes """
+# diabetes_clf = MLPClassifier(activation='logistic',
+#                              hidden_layer_sizes=(5,))
+#
+# x_train, x_test, y_train, y_test = train_test_split(w.diabetes.data,
+#                                                     w.diabetes.targets,
+#                                                     test_size=0.7,
+#                                                     train_size=0.3)
+#
+# diabetes_clf.fit(x_train, y_train)
+# print(diabetes_clf.score(x_test, y_test))
+
+""" existing implementation of iris """
+# iris_clf = MLPClassifier(activation='logistic',
+#                          hidden_layer_sizes=(5,))
+#
+# x_train, x_test, y_train, y_test = train_test_split(w.iris.data,
+#                                                     w.iris.targets,
+#                                                     test_size=0.7,
+#                                                     train_size=0.3)
+#
+# iris_clf.fit(x_train, y_train)
+# print(iris_clf.score(x_test, y_test))
